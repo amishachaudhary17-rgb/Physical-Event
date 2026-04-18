@@ -299,26 +299,34 @@
 
             <section class="panel" aria-labelledby="route-title">
                 <h2 id="route-title" class="panel-title">Smart Optimization</h2>
-                <fieldset style="border: none; padding: 0;">
-                    <legend class="visually-hidden" style="display:none;">Routing Options</legend>
-                    <label for="start-node">Current Point</label>
-                    <select id="start-node" aria-required="true">
-                        <option value="gate_a">Main Gate A</option>
-                        <option value="gate_b">North Gate B</option>
-                    </select>
-                    
-                    <label for="end-node">Destination</label>
-                    <select id="end-node" aria-required="true">
-                        <option value="seating_zone_1">Lower Tier Seating</option>
-                        <option value="food_court">Central Food Court</option>
-                    </select>
-                    
-                    <button class="btn" style="width: 100%" onclick="getSmartRoute()" aria-label="Calculate crowd-optimized route">
-                        🚀 Find Smartest Route
-                    </button>
-                </fieldset>
+                <form onsubmit="getSmartRoute(event)" aria-label="Find best routing option">
+                    <fieldset style="border: none; padding: 0; margin: 0;">
+                        <legend class="visually-hidden" style="display:none;">Routing Options Details</legend>
+                        <div style="margin-bottom: 1rem;">
+                            <label for="start-node">Current Point</label>
+                            <select id="start-node" aria-required="true" required>
+                                <option value="" disabled selected>Select start location</option>
+                                <option value="gate_a">Main Gate A</option>
+                                <option value="gate_b">North Gate B</option>
+                            </select>
+                        </div>
+                        
+                        <div style="margin-bottom: 1rem;">
+                            <label for="end-node">Destination</label>
+                            <select id="end-node" aria-required="true" required>
+                                <option value="" disabled selected>Select destination</option>
+                                <option value="seating_zone_1">Lower Tier Seating</option>
+                                <option value="food_court">Central Food Court</option>
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="btn" style="width: 100%" aria-label="Calculate crowd-optimized route">
+                            🚀 Find Smartest Route
+                        </button>
+                    </fieldset>
+                </form>
 
-                <div id="route-panel" aria-live="polite" style="display: none; margin-top: 1rem; padding: 16px; background: rgba(129, 140, 248, 0.15); border: 2px solid var(--primary); border-radius: 8px;">
+                <div id="route-panel" aria-live="polite" tabindex="-1" style="display: none; margin-top: 1rem; padding: 16px; background: rgba(129, 140, 248, 0.15); border: 2px solid var(--primary); border-radius: 8px;">
                     <strong style="color: var(--secondary); font-size: 1.1rem;">AI Recommendation</strong>
                     <p id="route-text" style="font-size: 0.9rem; line-height: 1.6; margin-top: 10px;"></p>
                 </div>
@@ -494,13 +502,16 @@
             }, 1200);
         }
 
-        async function getSmartRoute() {
+        async function getSmartRoute(event) {
+            if (event) event.preventDefault();
             const from = document.getElementById('start-node').value;
             const to = document.getElementById('end-node').value;
-            const btn = event.currentTarget;
+            const btn = event ? event.submitter : document.activeElement;
             
-            btn.disabled = true;
-            btn.innerHTML = '<span class="loader" style="display:inline-block; vertical-align:middle;"></span> Discovering Path...';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="loader" style="display:inline-block; vertical-align:middle;"></span> Discovering Path...';
+            }
 
             try {
                 const res = await fetch(`/api/venue/route?from=${from}&to=${to}`);
@@ -520,8 +531,10 @@
             } catch (e) {
                 showNotification("Routing Error", e.message || "Unable to determine a clear path.");
             } finally {
-                btn.disabled = false;
-                btn.innerHTML = '🚀 Find Smartest Route';
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '🚀 Find Smartest Route';
+                }
             }
         }
 

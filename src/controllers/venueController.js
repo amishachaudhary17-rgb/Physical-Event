@@ -10,7 +10,10 @@ const { zones } = require('../data/venueData');
 const { AppError } = require('../middlewares/errorHandler');
 
 /**
- * Get crowd reports
+ * Get crowd reports for all venue zones.
+ * @param {import('express').Request} req - Express request object
+ * @param {import('express').Response} res - Express response object
+ * @param {import('express').NextFunction} next - Express next middleware function
  */
 const getCrowdStatus = (req, res, next) => {
   try {
@@ -27,7 +30,10 @@ const getCrowdStatus = (req, res, next) => {
 };
 
 /**
- * Get queue predictions
+ * Get queue wait time predictions for all venue zones.
+ * @param {import('express').Request} req - Express request object
+ * @param {import('express').Response} res - Express response object
+ * @param {import('express').NextFunction} next - Express next middleware function
  */
 const getQueuePredictions = (req, res, next) => {
   try {
@@ -39,7 +45,10 @@ const getQueuePredictions = (req, res, next) => {
 };
 
 /**
- * Smart Route Suggestion
+ * Calculate and suggest a smart route avoiding heavy crowd density.
+ * @param {import('express').Request} req - Express request object
+ * @param {import('express').Response} res - Express response object
+ * @param {import('express').NextFunction} next - Express next middleware function
  */
 const getSmartRoute = (req, res, next) => {
   try {
@@ -57,7 +66,10 @@ const getSmartRoute = (req, res, next) => {
 };
 
 /**
- * General Natural Language AI Assistant
+ * Handle natural language questions using Gemini AI context.
+ * @param {import('express').Request} req - Express request object
+ * @param {import('express').Response} res - Express response object
+ * @param {import('express').NextFunction} next - Express next middleware function
  */
 const askAssistant = async (req, res, next) => {
   try {
@@ -69,7 +81,9 @@ const askAssistant = async (req, res, next) => {
 };
 
 /**
- * Alert Simulation
+ * Simulate an emergency or congestion push notification alert.
+ * @param {import('express').Request} req - Express request object
+ * @param {import('express').Response} res - Express response object
  */
 const sendAlert = (req, res) => {
   const alert = {
@@ -81,7 +95,10 @@ const sendAlert = (req, res) => {
 };
 
 /**
- * Update Density (Admin)
+ * Admin logic: update real-time density of a specific venue zone.
+ * @param {import('express').Request} req - Express request object
+ * @param {import('express').Response} res - Express response object
+ * @param {import('express').NextFunction} next - Express next middleware function
  */
 const updateDensity = (req, res, next) => {
   try {
@@ -89,7 +106,7 @@ const updateDensity = (req, res, next) => {
     const zone = zones.find(z => z.id === zoneId);
     if (!zone) return next(new AppError("Zone not found", 404));
     
-    // Update live memory
+    // Update live memory (In real world: Redis/Firebase/Postgres)
     zone.density = density;
     res.json({ success: true, updatedZone: zone });
   } catch (err) {

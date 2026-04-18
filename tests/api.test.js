@@ -82,6 +82,19 @@ describe('VenueCrowd API v2.1 Endpoints', () => {
       expect(res.statusCode).toEqual(400);
       expect(res.body.errors).toBeDefined();
     });
+
+    test('GET /api/venue/assistant should gracefully handle AI generation failure', async () => {
+      // Mock failure inside the single test scope
+      jest.spyOn(require('@google/generative-ai').GoogleGenerativeAI.prototype, 'getGenerativeModel').mockImplementationOnce(() => {
+        return {
+           generateContent: jest.fn().mockRejectedValue(new Error('AI Quota Exceeded'))
+        };
+      });
+      const res = await request(app).get('/api/venue/assistant?q=help');
+      expect(res.statusCode).toEqual(200);
+      expect(res.body).toHaveProperty('type', 'FALLBACK');
+      expect(res.body.fallback).toContain('Try Gate B');
+    });
   });
 
   describe('Admin & Notification API (Secure)', () => {
@@ -92,6 +105,17 @@ describe('VenueCrowd API v2.1 Endpoints', () => {
       expect(res.statusCode).toEqual(200);
       expect(res.body.status).toBe('Alert Sent');
       expect(res.body.alert).toHaveProperty('title');
+    });
+
+    test('GET /api/venue/alert should fail with 401 if token is missing and strict auth is expected', async () => {
+        // Force production environment temporarily to ensure auth middleware protects the route
+        const origEnv = process.env.NODE_ENV;
+        process.env.NODE_ENV = 'production';
+        const res = await request(app).get('/api/venue/alert');
+        process.env.NODE_ENV = origEnv;
+
+        expect(res.statusCode).toEqual(401);
+        expect(res.body.message).toContain('No token provided');
     });
 
     test('POST /api/venue/admin/density should update live state successfully', async () => {
@@ -130,6 +154,17 @@ describe('VenueCrowd API v2.1 Endpoints', () => {
       const res = await request(app).get('/api/invalid-fake-route');
       expect(res.statusCode).toEqual(404);
       expect(res.body.message).toContain('Can\'t find');
+    });
+
+    test('Internal Server Errors are mapped to generic 500 response', async () => {
+      // Intentionally cause failure in route logic
+      jest.spyOn(require('../src/services/navigationService'), 'findSmartPath').mockImplementationOnce(() => {
+        throw new Error('Critical Service Failure');
+      });
+      const res = await request(app).get('/api/venue/route?from=gate_a&to=gate_b');
+      expect(res.statusCode).toEqual(500);
+      expect(res.body.error).toBe('Venue Engine Exception');
+      expect(res.body.message).toContain('calculating route');
     });
 
     test('POST /api/calendar/sync should return handled error when lacking credentials', async () => {

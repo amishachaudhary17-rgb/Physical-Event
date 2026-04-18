@@ -29,7 +29,11 @@ app.use(helmet({
       "connect-src": ["'self'", "https://maps.googleapis.com", "https://maps.gstatic.com"]
     }
   },
-  crossOriginResourcePolicy: { policy: "cross-origin" }
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  xFrameOptions: { action: "deny" },
+  xContentTypeOptions: true,
+  referrerPolicy: { policy: "no-referrer" },
+  hsts: { maxAge: 31536000, includeSubDomains: true, preload: true }
 }));
 
 // CORS Configuration
@@ -42,6 +46,7 @@ app.use(cors(corsOptions));
 
 // Body Parsers & Sanitization
 app.use(express.json({ limit: '10kb' })); 
+app.use(express.urlencoded({ extended: true, limit: '10kb' })); // Added urlencoded limit
 app.use(express.static('public'));
 
 /**
