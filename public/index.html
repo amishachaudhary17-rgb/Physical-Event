@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VenueCrowd | Smart Event Optimizer</title>
+    
+    <!-- Meta tags for SEO & Security -->
+    <meta name="description" content="VenueCrowd offers real-time event optimization, navigation, and crowd management for large sporting venues.">
+    <meta name="theme-color" content="#0f172a">
+
+    <!-- Premium Typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #818cf8; /* Lightened for contrast against dark background */
+            --secondary: #38bdf8; /* Lightened cyan for contrast */
+            --bg-dark: #0f172a;
+            --surface: rgba(30, 41, 59, 0.85); /* Darkened for better contrast */
+            --text: #ffffff; /* Maximum contrast */
+            --text-muted: #e2e8f0; /* Lightened for WCAG AAA contrast */
+            --success: #34d399;
+            --warning: #fbbf24;
+            --danger: #f87171;
+            --glass: rgba(255, 255, 255, 0.15);
+            --focus-ring: 4px solid var(--secondary);
+            --error-text: #fca5a5;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        /* Accessibility: Visual focus for keyboard users */
+        *:focus-visible {
+            outline: var(--focus-ring);
+            outline-offset: 4px;
+            border-radius: 4px;
+        }
+
+        /* Skip to content link */
+        .skip-link {
+            position: absolute;
+            top: -50px;
+            left: 10px;
+            background: var(--primary);
+            color: #000000;
+            padding: 12px;
+            font-weight: 700;
+            z-index: 3000;
+            transition: top 0.3s;
+            border-radius: 4px;
+        }
+        .skip-link:focus { top: 10px; }
+
+        body {
+            background: var(--bg-dark);
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        h1, h2, h3 { font-family: 'Outfit', sans-serif; }
+
+        header {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--glass);
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -1px;
+            font-weight: 700;
+        }
+
+        .main-container {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        nav.sidebar {
+            background: var(--bg-dark);
+            border-right: 1px solid var(--glass);
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+
+        .panel {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--glass);
+        }
+
+        .panel-title {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--glass);
+            padding-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .zone-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0.5rem;
+            margin: 2px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .zone-card:hover, .zone-card:focus { background: var(--glass); outline: none; box-shadow: 0 0 0 2px var(--secondary); }
+
+        .density-tag {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #000; /* High contrast text on tags */
+        }
+
+        .low { background: #34d399; }
+        .medium { background: #fbbf24; }
+        .high { background: #fca5a5; }
+
+        #map-container { position: relative; width: 100%; height: 100%; }
+        #map { width: 100%; height: 100%; }
+
+        .floating-controls {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            z-index: 10;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: #000; /* High contrast */
+            border: 2px solid transparent;
+            padding: 0.75rem 1.25rem;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:hover:not(:disabled) { filter: brightness(1.2); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .btn-secondary { background: var(--surface); color: var(--text); border: 2px solid var(--text-muted); }
+        .btn-calendar { background: #4285F4; color: #fff; }
+
+        #notification {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: #1e293b;
+            padding: 1.5rem;
+            border-radius: 12px;
+            border-left: 6px solid var(--primary);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.7);
+            transform: translateY(150%);
+            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            z-index: 1000;
+            width: 340px;
+        }
+        #notification.show { transform: translateY(0); }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        .modal {
+            background: #1e293b;
+            padding: 2.5rem;
+            border-radius: 16px;
+            border: 1px solid var(--glass);
+            width: 450px;
+            max-width: 95%;
+        }
+
+        label { display: block; font-size: 0.9rem; margin-bottom: 0.4rem; color: var(--text-muted); font-weight: 600; }
+        select, input[type="text"], input[type="number"] {
+            background: var(--surface);
+            color: var(--text);
+            border: 2px solid var(--text-muted);
+            padding: 0.75rem;
+            border-radius: 6px;
+            width: 100%;
+            margin-bottom: 1rem;
+            font-size: 1rem;
+        }
+        select:focus, input:focus { border-color: var(--secondary); outline: none; }
+        
+        .error-hint { color: var(--error-text); font-size: 0.8rem; margin-top: -0.8rem; margin-bottom: 1rem; display: none; }
+
+        .loader {
+            width: 18px; height: 18px;
+            border: 3px solid var(--text-muted);
+            border-radius: 50%;
+            border-top-color: var(--secondary);
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 900px) {
+            .main-container { grid-template-columns: 1fr; }
+            .sidebar { position: absolute; bottom: 0; width: 100%; height: 40vh; z-index: 20; border-top: 1px solid var(--glass); }
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <header role="banner">
+        <h1 class="logo" aria-label="Venue Crowd System Homepage">VenueCrowd</h1>
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <div id="user-profile" style="display: none; align-items: center; gap: 8px;">
+                <img src="https://lh3.googleusercontent.com/a/default-user" alt="Profile Picture of Authenticated User" style="width: 32px; height: 32px; border-radius: 50%;">
+                <span id="user-name" style="font-size: 0.9rem; font-weight: 600;">Attendee</span>
+            </div>
+            <button class="btn btn-secondary" onclick="googleAuth()" id="auth-btn" aria-label="Sign in securely with Google account">
+                <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" style="width: 16px;" alt="Google Logo"> Sign In
+            </button>
+            <div id="connection-status" role="status" aria-live="polite" style="font-size: 0.8rem; font-weight: 600;">
+                <span class="loader" style="display: inline-block; vertical-align: middle;"></span> Connecting...
+            </div>
+        </div>
+    </header>
+
+    <main class="main-container" id="main-content" role="main">
+        <nav class="sidebar" aria-label="Main Applications Menu">
+            <section class="panel" aria-labelledby="ai-title">
+                <h2 id="ai-title" class="panel-title">🧠 Google Assistant</h2>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <label for="ai-query" class="visually-hidden" style="display:none;">Ask AI Assistant</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="ai-query" placeholder="Ask: 'Where is the food?'" aria-label="Natural Language Query Input" aria-required="true">
+                        <button class="btn" onclick="askAssistant()" style="padding: 10px; height: 46px;" aria-label="Submit Assistant Query">🚀</button>
+                    </div>
+                    <span id="ai-error" class="error-hint" role="alert">Please enter a valid question.</span>
+                </div>
+                <div id="ai-response" role="log" aria-live="polite" style="margin-top: 10px; font-size: 0.85rem; color: var(--text); background: rgba(56, 189, 248, 0.15); padding: 12px; border-radius: 6px; display: none; line-height: 1.5; border-left: 4px solid var(--secondary);"></div>
+            </section>
+
+            <section class="panel" aria-labelledby="crowd-title">
+                <h2 id="crowd-title" class="panel-title">Venue Crowd Density</h2>
+                <div id="crowd-list" role="list" aria-live="polite" aria-busy="true">
+                    <p style="color: var(--text-muted)">Monitoring live zones...</p>
+                </div>
+            </section>
+
+            <section class="panel" aria-labelledby="cal-title">
+                <h2 id="cal-title" class="panel-title">Event Schedule</h2>
+                <div style="font-size: 0.95rem; margin-bottom: 1rem; line-height: 1.4;">
+                    <strong>Championship Final 🏆</strong><br>
+                    <span style="color: var(--text-muted)">Sunday, May 10th - Kickoff 18:00</span>
+                </div>
+                <button class="btn btn-calendar" style="width: 100%" onclick="syncCalendar()" aria-label="Sync this event to your Google Calendar">
+                    <span aria-hidden="true">📅</span> Add to Google Calendar
+                </button>
+            </section>
+
+            <section class="panel" aria-labelledby="route-title">
+                <h2 id="route-title" class="panel-title">Smart Optimization</h2>
+                <fieldset style="border: none; padding: 0;">
+                    <legend class="visually-hidden" style="display:none;">Routing Options</legend>
+                    <label for="start-node">Current Point</label>
+                    <select id="start-node" aria-required="true">
+                        <option value="gate_a">Main Gate A</option>
+                        <option value="gate_b">North Gate B</option>
+                    </select>
+                    
+                    <label for="end-node">Destination</label>
+                    <select id="end-node" aria-required="true">
+                        <option value="seating_zone_1">Lower Tier Seating</option>
+                        <option value="food_court">Central Food Court</option>
+                    </select>
+                    
+                    <button class="btn" style="width: 100%" onclick="getSmartRoute()" aria-label="Calculate crowd-optimized route">
+                        🚀 Find Smartest Route
+                    </button>
+                </fieldset>
+
+                <div id="route-panel" aria-live="polite" style="display: none; margin-top: 1rem; padding: 16px; background: rgba(129, 140, 248, 0.15); border: 2px solid var(--primary); border-radius: 8px;">
+                    <strong style="color: var(--secondary); font-size: 1.1rem;">AI Recommendation</strong>
+                    <p id="route-text" style="font-size: 0.9rem; line-height: 1.6; margin-top: 10px;"></p>
+                </div>
+            </section>
+        </nav>
+
+        <section id="map-container" aria-label="Interactive Google Map of Venue" tabindex="0">
+            <div id="map" aria-hidden="true"></div>
+            <div class="floating-controls">
+                <button class="btn btn-secondary" onclick="simulateAlert()" aria-label="Simulate an emergency broadcast alert">
+                    <span aria-hidden="true">🚨</span> Emergency Sim
+                </button>
+                <button class="btn btn-secondary" onclick="toggleAdminModal(true)" aria-label="Open Admin Simulation Settings Modal" aria-haspopup="dialog" aria-controls="admin-modal">
+                    <span aria-hidden="true">⚙️</span> Admin Control
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Accessible Notification Overlay -->
+    <div id="notification" role="alert" aria-live="assertive" aria-atomic="true">
+        <h3 id="notif-title" style="font-size: 1.1rem; margin-bottom: 6px; color: #fff;">System Update</h3>
+        <p id="notif-msg" style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.4;"></p>
+    </div>
+
+    <!-- Admin Modal -->
+    <div id="admin-modal" class="modal-overlay" role="dialog" aria-labelledby="modal-title" aria-modal="true">
+        <div class="modal">
+            <h2 id="modal-title" style="margin-bottom: 1.5rem; font-size: 1.5rem;">Simulation Settings</h2>
+            <form onsubmit="submitAdminUpdate(event)">
+                <label for="admin-zone">Target Venue Zone</label>
+                <select id="admin-zone" required>
+                    <option value="gate_a">Main Gate A</option>
+                    <option value="gate_b">North Gate B</option>
+                    <option value="food_court">Central Food Court</option>
+                </select>
+                
+                <label for="admin-density">Simulated Density Output (%)</label>
+                <input type="number" id="admin-density" min="0" max="100" value="85" aria-describedby="density-desc" required>
+                <span id="density-desc" class="visually-hidden" style="display:none;">Enter a percentage from 0 to 100</span>
+                
+                <div style="display: flex; gap: 15px; margin-top: 1.5rem;">
+                    <button type="button" class="btn btn-secondary" style="flex: 1" onclick="toggleAdminModal(false)" aria-label="Cancel updates and close modal">Cancel</button>
+                    <button type="submit" class="btn" style="flex: 1" aria-label="Apply density changes">Apply Updates</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const GOOGLE_API_KEY = "REPLACE_WITH_YOUR_KEY"; 
+        let map, markers = [];
+
+        function loadGoogleMaps() {
+            const script = document.createElement('script');
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_API_KEY}&callback=initMap`;
+            script.async = true;
+            script.onerror = () => {
+                document.getElementById('connection-status').innerHTML = "🔴 Maps API Error";
+            };
+            document.head.appendChild(script);
+        }
+
+        function initMap() {
+            map = new google.maps.Map(document.getElementById("map"), {
+                center: { lat: -37.8198, lng: 144.9834 },
+                zoom: 17,
+                disableDefaultUI: true,
+                styles: [
+                  { "elementType": "geometry", "stylers": [{ "color": "#0f172a" }] },
+                  { "elementType": "labels.text.fill", "stylers": [{ "color": "#cbd5e1" }] },
+                  { "elementType": "labels.text.stroke", "stylers": [{ "color": "#0f172a" }] },
+                  { "featureType": "road", "elementType": "geometry", "stylers": [{ "color": "#1e293b" }] }
+                ]
+            });
+            fetchData();
+        }
+
+        async function fetchData() {
+            try {
+                const response = await fetch('/api/venue/crowd');
+                if (!response.ok) throw new Error('Network response was not ok');
+                const data = await response.json();
+                updateUI(data);
+                document.getElementById('connection-status').innerHTML = "🟢 Live Connected";
+                document.getElementById('crowd-list').setAttribute('aria-busy', 'false');
+            } catch (e) {
+                document.getElementById('connection-status').innerHTML = "🔴 Data Offline";
+                document.getElementById('crowd-list').innerHTML = "<p style='color: var(--danger)'>Failed to load data. Retrying...</p>";
+            }
+        }
+
+        function updateUI(zones) {
+            const list = document.getElementById('crowd-list');
+            list.innerHTML = '';
+            markers.forEach(m => m.setMap(null));
+            markers = [];
+
+            zones.forEach(zone => {
+                const card = document.createElement('div');
+                card.className = 'zone-card';
+                card.role = 'listitem';
+                card.tabIndex = 0;
+                card.ariaLabel = `${zone.name}. Status is ${zone.status}. Density is ${zone.density} percent. Press enter for insights.`;
+                card.innerHTML = `
+                    <span style="font-weight: 600">${zone.name}</span>
+                    <span class="density-tag ${zone.status.toLowerCase()}" aria-hidden="true">${zone.status}</span>
+                `;
+                card.onkeypress = (e) => { if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); focusOnZone(zone); } };
+                card.onclick = () => focusOnZone(zone);
+                list.appendChild(card);
+
+                if (map) {
+                    const marker = new google.maps.Marker({
+                        position: { lat: -37.8198 + (Math.random() * 0.002 - 0.001), lng: 144.9834 + (Math.random() * 0.004 - 0.002) },
+                        map: map,
+                        title: `${zone.name} - ${zone.status}`,
+                        icon: {
+                            path: google.maps.SymbolPath.CIRCLE,
+                            scale: 12 + (zone.density / 8),
+                            fillColor: zone.status === 'High' ? "#ef4444" : (zone.status === 'Medium' ? "#f59e0b" : "#10b981"),
+                            fillOpacity: 0.85,
+                            strokeWeight: 2,
+                            strokeColor: "#ffffff"
+                        }
+                    });
+                    markers.push(marker);
+                }
+            });
+        }
+
+        function focusOnZone(zone) {
+            showNotification("Zone Insight", `The ${zone.name} is currently ${zone.status} at ${zone.density}%.`);
+            if (map) map.panTo({ lat: -37.8198, lng: 144.9834 });
+        }
+
+        async function askAssistant() {
+            const query = document.getElementById('ai-query').value.trim();
+            const errorHint = document.getElementById('ai-error');
+            
+            if (!query) {
+                errorHint.style.display = 'block';
+                document.getElementById('ai-query').setAttribute('aria-invalid', 'true');
+                return;
+            }
+            errorHint.style.display = 'none';
+            document.getElementById('ai-query').removeAttribute('aria-invalid');
+
+            const resDiv = document.getElementById('ai-response');
+            resDiv.innerHTML = '<span class="loader" style="display:inline-block; vertical-align:middle;"></span> Processing AI analysis...';
+            resDiv.style.display = 'block';
+
+            try {
+                const res = await fetch(`/api/venue/assistant?q=${encodeURIComponent(query)}`);
+                const data = await res.json();
+                resDiv.innerHTML = `<strong style="color:#fff">Assistant Answers:</strong><br>${data.analysis || data.fallback}`;
+            } catch (e) {
+                resDiv.innerHTML = "AI Assistant temporarily unavailable.";
+            }
+        }
+
+        function googleAuth() {
+            const btn = document.getElementById('auth-btn');
+            btn.setAttribute('aria-busy', 'true');
+            btn.innerHTML = '<span class="loader" style="display:inline-block; vertical-align:middle;"></span> Securely Verifying...';
+            
+            setTimeout(() => {
+                document.getElementById('user-profile').style.display = 'flex';
+                btn.style.display = 'none';
+                // Automatically set a mock token in localStorage for demo
+                localStorage.setItem('auth_token', 'mock_secure_token_abc123');
+                showNotification("Identity Verified", "Sign in successful. Welcome to VenueCrowd Premium.");
+            }, 1200);
+        }
+
+        async function getSmartRoute() {
+            const from = document.getElementById('start-node').value;
+            const to = document.getElementById('end-node').value;
+            const btn = event.currentTarget;
+            
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loader" style="display:inline-block; vertical-align:middle;"></span> Discovering Path...';
+
+            try {
+                const res = await fetch(`/api/venue/route?from=${from}&to=${to}`);
+                const data = await res.json();
+                
+                if(!res.ok) throw new Error(data.message || 'Routing failed');
+
+                const panel = document.getElementById('route-panel');
+                const text = document.getElementById('route-text');
+                
+                // Format the zone names better
+                const pathNames = data.zones ? data.zones.map(z => z.name).join(' ➜ ') : data.pathIds.join(' ➜ ');
+
+                text.innerHTML = `<strong>Optimized Path:</strong><br>${pathNames} <br><br><strong>Decision Rationale:</strong><br><span style="color: var(--secondary)">${data.benefit}</span>`;
+                panel.style.display = 'block';
+                panel.focus(); // shift focus
+            } catch (e) {
+                showNotification("Routing Error", e.message || "Unable to determine a clear path.");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '🚀 Find Smartest Route';
+            }
+        }
+
+        async function syncCalendar() {
+            try {
+                const btn = event.currentTarget;
+                btn.disabled = true;
+                const token = localStorage.getItem('auth_token') || '';
+
+                const res = await fetch('/api/calendar/sync', { 
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                showNotification(data.error ? "Calendar Sync Notice" : "Calendar Update", data.error || "Event actively synced to Google Calendar.");
+                btn.disabled = false;
+            } catch (e) {
+                showNotification("Sync Failed", "Could not integrate with Google Services.");
+            }
+        }
+
+        async function simulateAlert() {
+            try {
+                const token = localStorage.getItem('auth_token') || '';
+                const res = await fetch('/api/venue/alert', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                showNotification(data.alert.title, data.alert.message);
+            } catch (e) { 
+                showNotification("Alert Error", "Insufficient Permissions.");
+            }
+        }
+
+        function showNotification(title, msg) {
+            const notif = document.getElementById('notification');
+            document.getElementById('notif-title').innerText = title;
+            document.getElementById('notif-msg').innerText = msg;
+            notif.classList.add('show');
+            setTimeout(() => notif.classList.remove('show'), 8000); // WCAG extended reading time
+        }
+
+        function toggleAdminModal(show) {
+            const modal = document.getElementById('admin-modal');
+            modal.style.display = show ? 'flex' : 'none';
+            if (show) {
+                document.getElementById('admin-zone').focus();
+            } else {
+                // Focus back on button
+                document.body.focus();
+            }
+        }
+
+        async function submitAdminUpdate(e) {
+            e.preventDefault();
+            const zoneId = document.getElementById('admin-zone').value;
+            const density = document.getElementById('admin-density').value;
+            const token = localStorage.getItem('auth_token') || '';
+
+            toggleAdminModal(false);
+            try {
+                const res = await fetch('/api/venue/admin/density', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ zoneId, density: parseInt(density) })
+                });
+                
+                if (!res.ok) {
+                    const data = await res.json();
+                    throw new Error(data.message || 'Denial error');
+                }
+                
+                fetchData();
+                showNotification("Admin Override Successful", `Zone ${zoneId} is now calibrated to ${density}%.`);
+            } catch (e) {
+                showNotification("Action Blocked", `Authorization or network error: ${e.message}`);
+            }
+        }
+
+        // Initialize maps & polling safely
+        window.onload = () => {
+            loadGoogleMaps();
+            setInterval(fetchData, 30000); 
+        };
+    </script>
+</body>
+</html>
