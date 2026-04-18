@@ -1,4 +1,5 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { google } = require('googleapis');
 const { zones } = require('../data/venueData');
 
 /**
@@ -12,6 +13,10 @@ class GoogleService {
     if (process.env.GEMINI_API_KEY) {
        this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     }
+    this.auth = new google.auth.GoogleAuth({
+      scopes: ['https://www.googleapis.com/auth/calendar.events']
+    });
+    this.calendar = google.calendar({ version: 'v3', auth: this.auth });
   }
 
   /**
@@ -43,6 +48,24 @@ class GoogleService {
       this.logEvent('ERROR', 'AI reasoning failed', { error: err.message });
       return { error: "AI reasoning failed", fallback: "Try Gate B for lower congestion right now.", type: 'FALLBACK' };
     }
+  }
+
+  /**
+   * Calendar Sync execution
+   * @returns {Promise<Object>} The API response from Google
+   */
+  async syncEventToCalendar() {
+     const event = {
+        summary: 'Stadium Event Day Optimizer',
+        location: 'Gate B, Sports Venue',
+        description: 'Arrive via North Gate B for 40% less congestion. Sync with VenueCrowd.',
+        start: { dateTime: '2026-05-10T18:00:00Z', timeZone: 'UTC' },
+        end: { dateTime: '2026-05-10T22:00:00Z', timeZone: 'UTC' }
+     };
+     return await this.calendar.events.insert({
+        calendarId: process.env.GOOGLE_CALENDAR_ID || 'primary',
+        resource: event,
+     });
   }
 
   /**

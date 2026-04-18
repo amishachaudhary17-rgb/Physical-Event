@@ -63,42 +63,11 @@ try {
   googleService.logEvent('WARNING', 'Firebase init failed in ' + process.env.NODE_ENV + ' mode.');
 }
 
-const auth = new google.auth.GoogleAuth({
-  scopes: ['https://www.googleapis.com/auth/calendar.events']
-});
-const calendar = google.calendar({ version: 'v3', auth });
-
 /**
  * 📦 Modular Routing
  */
 app.use('/api/venue', venueRoutes);
-
-/**
- * 📅 Calendar Sync (Specific Route)
- */
-app.post('/api/calendar/sync', async (req, res, next) => {
-  const event = {
-    summary: 'Stadium Event Day Optimizer',
-    location: 'Gate B, Sports Venue',
-    description: 'Arrive via North Gate B for 40% less congestion. Sync with VenueCrowd.',
-    start: { dateTime: '2026-05-10T18:00:00Z', timeZone: 'UTC' },
-    end: { dateTime: '2026-05-10T22:00:00Z', timeZone: 'UTC' }
-  };
-
-  try {
-    const response = await calendar.events.insert({
-      calendarId: process.env.GOOGLE_CALENDAR_ID || 'primary',
-      resource: event,
-    });
-    res.json({ success: true, link: response.data.htmlLink });
-  } catch (err) {
-    // Graceful fallback for demo/simulation
-    res.status(200).json({ 
-        error: "Notice: Sync is in simulated mode (no service account).", 
-        mockLink: "https://calendar.google.com/event?id=venue_crowd_demo" 
-    });
-  }
-});
+app.use('/api/calendar', venueRoutes);
 
 /**
  * Handle 404 routes

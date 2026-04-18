@@ -59,4 +59,9 @@ router.post('/admin/density',
   venueController.updateDensity
 );
 
+/**
+ * 7. Calendar Synchronization
+ */
+router.post('/sync', apiLimiter, venueController.syncCalendar);
+
 module.exports = router;

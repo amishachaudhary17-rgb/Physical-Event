@@ -15,11 +15,6 @@ const verifyToken = async (req, res, next) => {
   // Try to get token from Authorization header (Bearer token)
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    // Return unauthorized
-    // If not strict mode, allow for local demo
-    if (process.env.NODE_ENV !== 'production' && !process.env.FIREBASE_SERVICE_ACCOUNT) {
-       return next();
-    }
     return next(new AppError('No token provided, authorization denied.', 401));
   }
 

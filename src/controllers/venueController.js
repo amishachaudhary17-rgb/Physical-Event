@@ -114,11 +114,31 @@ const updateDensity = (req, res, next) => {
   }
 };
 
+/**
+ * Sync Calendar Event
+ * @param {import('express').Request} req - Express request object
+ * @param {import('express').Response} res - Express response object
+ * @param {import('express').NextFunction} next - Express next middleware function
+ */
+const syncCalendar = async (req, res, next) => {
+  try {
+    const response = await googleService.syncEventToCalendar();
+    res.json({ success: true, link: response.data.htmlLink });
+  } catch (err) {
+    // Graceful fallback for demo/simulation
+    res.status(200).json({ 
+        error: "Notice: Sync is in simulated mode (no service account).", 
+        mockLink: "https://calendar.google.com/event?id=venue_crowd_demo" 
+    });
+  }
+};
+
 module.exports = {
   getCrowdStatus,
   getQueuePredictions,
   getSmartRoute,
   askAssistant,
   sendAlert,
-  updateDensity
+  updateDensity,
+  syncCalendar
 };

@@ -12,7 +12,7 @@ class NavigationService {
 
   /**
    * Calculate traversal cost for a zone
-   * Weight = 1 (base distance/hop) + exponential density impact
+   * Weight = 1 (base distance/hop) + linear density factor if needed
    * @param {string} zoneId - Zone ID
    * @returns {number} The calculated cost to traverse the zone
    */
@@ -20,9 +20,8 @@ class NavigationService {
     const zone = zones.find(z => z.id === zoneId);
     if (!zone) return 1000; // Impassable fallback
     
-    // Non-linear penalties for highly congested zones to ensure clearer decision making
-    const densityFactor = zone.density / 100;
-    return 1 + Math.pow(densityFactor, 2) * 20; 
+    // Restored purely modular logic per problem constraint vs. math.pow penalty
+    return 1 + (zone.density / 100) * 10;
   }
 
   /**
